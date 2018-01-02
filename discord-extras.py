@@ -10,11 +10,21 @@ import discord
 import re
 
 def get_user_identifier(user):
-	""" get_user_identifier(user): Get the unique identifier of the discord.User or discord.Member user, in the format of User#1234."""
+	"""get_user_identifier(user): Get the unique identifier of the discord.User or discord.Member user, in the format of User#1234."""
 	try:
 		return user.name + "#" + user.discriminator
 	except AttributeError as a:
 		raise TypeError("Expected 'discord.User' or 'discord.Member'. Received " + re.match(r"'[a-zA-Z]*'", str(a))[0])
+
+async def reply(client, message, text):
+	"""reply(client, message, text): Shrinks needed code for sending a reply to a message's channel.
+
+This function is a coroutine. (must be used with await).
+
+Params: client (discord.Client): The client from which to send message.
+        message (discord.Message): The message being replied to.
+        text (str): The text for the reply."""
+    await client.send_message(message.channel, text)
 
 async def ask_for_message(client, message, prompt, timeout=30, timeout_msg="Operation timed out.", condition=lambda m: True, fail_msg=""):
 	"""ask_for_message(client, message, prompt, timeout=30, timeout_msg="Operation timed out.". condition=lambda m: True, fail_msg=""):
@@ -43,13 +53,13 @@ More detail: The client sends a message to message.channel containing prompt, th
 	         Otherwiser, the message's content will be passed through condition. If it returns False, the client will send fail_msg."""
 	try:
 		assert isinstance(timeout, int)
-		await client.send_message(message.channel, prompt)
+		await reply(client, message.channel, prompt)
 		answer = await client.wait_for_message(channel=message.channel, author=message.author, timeout=timeout)
 		if answer is None:
-			await client.send_message(message.channel, timeout_msg)
+			await reply(client, message.channel, timeout_msg)
 			return None
 		if not condition(answer.content):
-			await client.send_message(message.channel, fail_msg)
+			await reply(client, message.channel, fail_msg)
 			return None
 		return message.content
 	except Exception as e:
